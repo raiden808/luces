@@ -43,7 +43,7 @@
 
                 let userData =  JSON.parse(data)
 
-                if(userData?.type === 'admin') {
+                if(userData?.type) {
                     document.getElementById('responseMessage').innerText = 'Success!';
                 } else {
                     document.getElementById('responseMessage').innerText = 'Error!';
