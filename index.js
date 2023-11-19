@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require("express");
-const { MongoClient } = require("mongodb");
+const { MongoClient,ObjectId  } = require("mongodb");
 const app = express();
 const port = 3000;
 const cors = require("cors");
@@ -40,14 +40,20 @@ async function main() {
     app.put("/items/:id", async (req, res) => {
       const id = req.params.id;
       const newData = req.body;
-      const result = await collection.updateOne({ _id: id }, { $set: newData });
+      const result = await collection.updateOne({ _id: new ObjectId(id) }, { $set: newData });
       res.status(200).send(result);
     });
 
     // DELETE
     app.delete("/items/:id", async (req, res) => {
       const id = req.params.id;
-      const result = await collection.deleteOne({ _id: id });
+
+      console.log('Trigger delete, id is: ', id)
+
+      const result = await collection.deleteOne({ _id: new ObjectId(id) });
+
+      console.log('Result is: ', result)
+
       res.status(200).send(result);
     });
 
