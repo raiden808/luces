@@ -3,8 +3,13 @@ const express = require("express");
 const { MongoClient } = require("mongodb");
 const app = express();
 const port = 3000;
+const cors = require("cors");
 
 app.use(express.json());
+
+app.use(cors()); // Enable CORS for all routes
+app.use(express.static('public'));
+
 
 const url = process.env.MONGODB; // Replace with your MongoDB connection string
 const dbName = "Luces";
@@ -71,6 +76,8 @@ async function main() {
     });
 
     console.log("Starting server...");
+
+
 
     app.listen(port, () => {
       console.log(`Server running at http://localhost:${port}`);
