@@ -62,10 +62,6 @@ async function main() {
 
       console.log("Account is: ", req.body);
 
-      const all = await userCollection.find();
-
-      console.log("All is: ", all);
-
       const data = await userCollection.findOne({
         /* your query */
         username: username,
@@ -75,7 +71,7 @@ async function main() {
 
       if (data.password === password) {
         // In real applications, use bcrypt to hash and compare passwords
-        res.send("Login successful!");
+        res.status(200).send(data);
       } else {
         res.status(401).send("Login failed: Incorrect password");
       }
