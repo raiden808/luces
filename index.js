@@ -1,78 +1,83 @@
+require('dotenv').config();
 const express = require("express");
-const mongoose = require("mongoose");
+const { MongoClient } = require("mongodb");
 const app = express();
-const cors = require("cors");
-app.use(cors()); // Enable CORS for all routes
+const port = 3000;
 
 app.use(express.json());
 
-// Replace with your MongoDB URI
+const url = process.env.MONGODB; // Replace with your MongoDB connection string
+const dbName = "Luces";
+const client = new MongoClient(url);
 
-const mongoURI = "";
-// Connect to MongoDB
-mongoose
-  .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.log(err));
+async function main() {
+  try {
+    await client.connect();
+    console.log("Connected to MongoDB");
+    const db = client.db(dbName);
+    const collection = db.collection("items");
+    const userCollection = db.collection("user");
 
-// Define a schema and model
-const ItemSchema = new mongoose.Schema({
-  name: String,
-});
-const Item = mongoose.model("items", ItemSchema);
+    // CREATE
+    app.post("/items", async (req, res) => {
+      const item = req.body;
+      const result = await collection.insertOne(item);
+      res.status(201).send(result);
+    });
 
-// CRUD operations
-// Create
-app.post("/items", (req, res) => {
-  console.log("Items Created:", req.body);
-  const newItem = new Item(req.body);
-  newItem.save().then((item) => res.json(item));
-});
+    // READ
+    app.get("/items", async (req, res) => {
+      const items = await collection.find({}).toArray();
+      res.status(200).send(items);
+    });
 
-// Read
-app.get("/items", (req, res) => {
-  Item.find().then((items) => res.json(items));
-});
+    // UPDATE
+    app.put("/items/:id", async (req, res) => {
+      const id = req.params.id;
+      const newData = req.body;
+      const result = await collection.updateOne({ _id: id }, { $set: newData });
+      res.status(200).send(result);
+    });
 
-// Update
-app.put("/items/:id", (req, res) => {
-  Item.findByIdAndUpdate(req.params.id, req.body, { new: true }).then((item) =>
-    res.json(item)
-  );
-});
+    // DELETE
+    app.delete("/items/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await collection.deleteOne({ _id: id });
+      res.status(200).send(result);
+    });
 
-// Delete
-app.delete("/items/:id", (req, res) => {
-  Item.findByIdAndDelete(req.params.id).then(() => res.json({ success: true }));
-});
+    app.post("/login", async (req, res) => {
+      const { username, password } = req.body;
 
-/**
- * User Section
- */
+      console.log("Account is: ", req.body);
 
-// User Schema
-const userCollection = mongoose.connection.collection("user");
+      const all = await userCollection.find();
 
-app.post("/login", async (req, res) => {
-  const { username, password } = req.body;
+      console.log("All is: ", all);
 
-  console.log("Account is: ", req.body);
+      const data = await userCollection.findOne({
+        /* your query */
+        username: username,
+      });
 
-  const data = await userCollection.findOne({
-    /* your query */
-    username: username,
-  });
+      console.log("Data is: ", data);
 
-  if (data.password === password) {
-    // In real applications, use bcrypt to hash and compare passwords
-    res.send("Login successful!");
-  } else {
-    res.status(401).send("Login failed: Incorrect password");
+      if (data.password === password) {
+        // In real applications, use bcrypt to hash and compare passwords
+        res.send("Login successful!");
+      } else {
+        res.status(401).send("Login failed: Incorrect password");
+      }
+    });
+
+    console.log("Starting server...");
+
+    app.listen(port, () => {
+      console.log(`Server running at http://localhost:${port}`);
+    });
+  } catch (err) {
+    console.error("An error occurred", err);
   }
-});
+}
 
-// Start the server
-const port = 3000;
-
-app.use(express.static('public'));
-app.listen(port, () => console.log(`Server running on port ${port}`));
+main().catch(console.error);
